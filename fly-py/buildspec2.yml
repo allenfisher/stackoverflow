@@ -19,7 +19,6 @@ phases:
       # Print IP for debugging purposes
       - curl -s http://whatismyip.akamai.com/
 
-      - pip install -r requirements.txt
       - echo "Installing flyway..."
       - echo "docker run --rm flyway/flyway:6.0.4 -url=$RDS_DB_URL -schemas=$RDS_DB_SCHEMA -user=$RDS_DB_USER -password=$RDS_DB_PASS -connectRetries=60 migrate" > /usr/local/bin/flyway
 
