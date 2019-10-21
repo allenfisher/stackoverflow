@@ -1,0 +1,35 @@
+---
+version: 0.2
+
+env:
+  variables:
+    BUILD_TYPE: "development"
+  parameter-store:
+    RDS_DB_USER: "/path/to/my/dev/dbchange.db.username"
+    RDS_DB_PASS: "/path/to/my/dev/dbchange.db.password"
+    RDS_DB_URL: "/path/to/rdsDevDbFlywayUrl"
+    RDS_DB_SCHEMA: "/path/to/rdsDevDbSchema"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+      docker: 18
+    commands:
+      # Print IP for debugging purposes
+      - curl -s http://whatismyip.akamai.com/
+
+      - pip install -r requirements.txt
+      - echo "Installing flyway..."
+      - echo "docker run --rm flyway/flyway:6.0.4 -url=$RDS_DB_URL -schemas=$RDS_DB_SCHEMA -user=$RDS_DB_USER -password=$RDS_DB_PASS -connectRetries=60 migrate" > /usr/local/bin/flyway
+
+      - nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&
+      - timeout 15 sh -c "until docker info; do echo .; sleep 1; done"
+
+  build:
+    commands:
+      - echo "Running migration script"
+      - flyway
+  post_build:
+    commands:
+      - echo "Build Completed!"
